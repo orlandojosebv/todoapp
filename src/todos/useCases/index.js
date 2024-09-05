@@ -1,3 +1,5 @@
-export { createTodoHtml } from './createTodoHtml.js';
-export {renderTodos} from './renderTodos.js';
 
+
+export { createTodoHtml } from './createTodoHtml.js';
+export { renderPending } from './renderPending.js';
+export {renderTodos} from './renderTodos.js';

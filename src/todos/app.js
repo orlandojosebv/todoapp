@@ -1,10 +1,13 @@
 import html from "./app.html?raw";
-import todoStore from "../store/todo-store.js";
-import { renderTodos } from "./useCases/renderTodos.js";
+import todoStore, { Filters } from "../store/todo-store.js";
+import { renderTodos, renderPending } from "./useCases/index.js";
 
 const ElementIds = {
   TodoList: ".todo-list",
   NewTodoInput: "#new-todo-input",
+  ClearCompleted: ".clear-completed",
+  TodoFilters: ".filtro",
+  PendingCount: "#pending-count",
 };
 
 /**
@@ -15,6 +18,11 @@ export const App = (elementId) => {
   const displayTodos = () => {
     const todos = todoStore.getTodos(todoStore.getCurrentFilter());
     renderTodos(ElementIds.TodoList, todos);
+    updatePendingCount();
+  };
+
+  const updatePendingCount = () => {
+    renderPending(ElementIds.PendingCount);
   };
 
   //Cuando la función App() se llama
@@ -29,6 +37,10 @@ export const App = (elementId) => {
   //referencias HTML
   const newDescriptionInput = document.querySelector(ElementIds.NewTodoInput);
   const todoListUl = document.querySelector(ElementIds.TodoList);
+  const clearCompletedButton = document.querySelector(
+    ElementIds.ClearCompleted
+  );
+  const filtersLi = document.querySelectorAll(ElementIds.TodoFilters); //Devuelve un arreglo
 
   //Listeners
 
@@ -47,19 +59,42 @@ export const App = (elementId) => {
   });
 
   todoListUl.addEventListener("click", (event) => {
-    console.log(event.target.className);
+    const isDestroyElement = event.target.className === "destroy";
+    const element = event.target.closest("[data-id]");
 
-    const isDestroyElement =event.target.className === 'destroy';
-    const element = event.target.closest("[data-id]"); 
-
-    if(isDestroyElement){
+    if (isDestroyElement) {
       todoStore.deleteTodo(element.getAttribute("data-id"));
       displayTodos();
-
-    }else{
+    } else {
       return;
     }
-    
   });
 
+  clearCompletedButton.addEventListener("click", (event) => {
+    const element = event.target.className;
+
+    if (element !== "clear-completed") return;
+
+    todoStore.deleteCompleted();
+    displayTodos();
+  });
+
+  filtersLi.forEach((element) => {
+    element.addEventListener("click", (element) => {
+      filtersLi.forEach((el) => el.classList.remove("selected"));
+      element.target.classList.add("selected");
+      switch (element.target.text) {
+        case "Todos":
+          todoStore.setFilter(Filters.All);
+          break;
+        case "Pendientes":
+          todoStore.setFilter(Filters.Pending);
+          break;
+        case "Completados":
+          todoStore.setFilter(Filters.Completed);
+          break;
+      }
+      displayTodos();
+    });
+  });
 };
